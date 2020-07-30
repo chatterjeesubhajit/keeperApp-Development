@@ -27,10 +27,12 @@ function CreateArea(props) {
   }
 
   function submitNote(event) {
+    if(note.title!=='')
+    {
     note.ind=shortid.generate();
     props.onAdd(note);
     setNote((prevNote)=>{
-      console.log("note:",prevNote);      
+ 
     axios
       .post('/create', prevNote)
       .then(() => console.log('Data Shared'))
@@ -39,6 +41,7 @@ function CreateArea(props) {
       });
 
     return ({ind:"",    title: "",    content: "",    bgColor:"#ffff",  fontColor:"#000"});});
+    }
     event.preventDefault();
   }
   const [noteClick, setNoteClick] = useState(false);
@@ -54,6 +57,7 @@ function CreateArea(props) {
           value={note.title}
           placeholder="Title"
           hidden={!noteClick && true}
+          required
         />
         <textarea
           name="content"
@@ -62,6 +66,7 @@ function CreateArea(props) {
           value={note.content}
           placeholder="Take a note..."
           rows={(!noteClick && true && "1") || "3"}
+          required
         />
         <Zoom in={noteClick && true}>
           <Fab onClick={submitNote}>

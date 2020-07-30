@@ -1,5 +1,6 @@
 const passport = require("passport");
 const FbStrategy = require('passport-facebook').Strategy;
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const dotenv = require('dotenv');
 dotenv.config({ path: '../.env'});
 const User = require("../models/users");
@@ -26,7 +27,27 @@ passport.use(new FbStrategy({
 },
 function(accessToken, refreshToken, profile, cb) {
   console.log(profile);
-  User.findOrCreate({displayName:profile.displayName,loginMethod:"facebook", userId: profile.id}, function (err, user) {
+  User.findOrCreate({displayName:profile.displayName,loginMethod:"facebook", username: profile.id}, function (err, user) {
     return cb(err, user);
   });
 }));
+
+passport.use(new GoogleStrategy({
+  clientID: process.env.G_CLIENT_ID,
+  clientSecret: process.env.G_CLIENT_SECRET,
+  callbackURL: "/auth/google/redirect",
+  userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+  passReqToCallback: true,
+  accessType:'offline'
+},
+function(accessToken, refreshToken,params, profile, cb) {
+  console.log(profile);
+  // console.log("access token: ",accessToken);
+  console.log("refresh token: ",refreshToken);
+  console.log("params :",params);
+
+  User.findOrCreate({displayName:profile.displayName,loginMethod:"google", username: profile.id}, function (err, user) {
+    return cb(err, user);
+  });
+}
+));

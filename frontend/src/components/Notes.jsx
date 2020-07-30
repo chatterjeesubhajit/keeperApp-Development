@@ -1,53 +1,30 @@
-import React, { useState,useEffect } from "react";
-import Header from "./Header";
-import Footer from "./Footer";
+import React, { useState,useContext} from "react";
 import Note from "./Note";
 import CreateArea from "./CreateArea";
 import axios from "axios";
 import './Notes.css';
-// import Container from 'react-bootstrap/Container';
 import { MDBContainer} from "mdbreact";
 import "./scrollbar.css";
 import classNames from "classnames";
-
-
+import {NotesContext} from "./NotesRepo";
+import { useHistory } from "react-router-dom";
 
 function Notes(props) {
+  
+  const history = useHistory();  
   axios.defaults.withCredentials = true;
-  const [notes, setNotes] = useState(props.notes);
-
+  const {notes, setNotes} = useContext(NotesContext);
+  console.log("notes");
   function addNote(newNote) {
     setNotes(prevNotes => {
       return [...prevNotes, newNote];
     });
   }
   
-
-  function deleteNote(id,ind) {
-    console.log("note to be deleted: "+ind);
-
-    setNotes(prevNotes => {
-      return prevNotes.filter((noteItem, index) => {
-        return noteItem.ind !== ind;
-      });
-    });
+  function handleZoom(title) {
+    history.push(`/note`);
   }
 
-  function UpdateNote(note)
-  {
-    console.log(note);
-    setNotes(notes.map((o) => {
-      if (o.ind === note.ind) return {...note}
-      return o;
-    }));
-    axios
-    .patch('/update',note)
-    .then(() => console.log('Data to be updated is shared'))
-    .catch(err => {
-      console.error(err);
-    });
-
-};
 
   const scrollBarClass = classNames('scrollbar','my-5','mx-auto');
 
@@ -59,23 +36,9 @@ function Notes(props) {
       <CreateArea onAdd={addNote} />
       <MDBContainer>
       <div className={scrollBarClass} style={scrollContainerStyle}>
-      {notes.map((noteItem) => {
-        return (
-          <Note
-            key={noteItem.ind}
-            ind={noteItem.ind}
-            title={noteItem.title}
-            content={noteItem.content}
-            onDelete={deleteNote}
-            onUpdate={UpdateNote}
-            bgColor={noteItem.bgColor}
-            fontColor={noteItem.fontColor}
-          />
+      {notes.map((noteItem) => (<Note key={noteItem.ind} noteItem={noteItem} handleZoom={handleZoom} />))}
 
-        );
-      })}
       </div>
-
       </MDBContainer> 
     </div>
   );

@@ -49,11 +49,11 @@ function AlertDialog(props) {
       >
         <ColorPicker onColorChange={props.onColorChange} DBUpdate={props.DBUpdate}/>
         <DialogTitle id="alert-dialog-slide-title">
-          {props.title}
+          {props.note.title}
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-slide-description">
-          <textarea name="content" onChange={handleChange} defaultValue={props.content} placeholder="Take a note..." rows={"5"} cols={"50"} />
+          <textarea name="content" onChange={handleChange} defaultValue={props.note.content} placeholder="Take a note..." rows={"5"} cols={"50"} />
           </DialogContentText>
         </DialogContent>
         <DialogActions>

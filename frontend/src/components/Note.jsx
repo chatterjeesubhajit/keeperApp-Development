@@ -1,67 +1,100 @@
-import React,{useState,useMemo} from "react";
+import React, { useState, useMemo, useContext } from "react";
 import DeleteIcon from "@material-ui/icons/Delete";
+import ZoomOutMapIcon from "@material-ui/icons/ZoomOutMap";
 import axios from "axios";
 import { Zoom } from "@material-ui/core";
-// import EditIcon from '@material-ui/icons/Edit';
 import AlertDialog from "./EditableNote";
+import { useHistory } from "react-router-dom";
+import { NotesContext } from "./NotesRepo";
+import { LoginContext } from "./LoginContext";
+import classNames from "classnames";
+import { Dropdown } from "react-bootstrap";
+import MenuIcon from '@material-ui/icons/Menu';
 
 function Note(props) {
-  function handleClick() {
-    let tbd=props.ind;
-    axios
-    .delete('/delete',{data:{ index: tbd}})
-    .then(() => console.log('Data to be deleted is shared'))
-    .catch(err => {
-      console.error(err);
-    });
+  const { notes, setNotes } = useContext(NotesContext);
+  const [loggedIn, setLoggedIn] = useContext(LoginContext);
+  let history = useHistory();
+  const [note, setNote] = useState(props.noteItem);
 
-    props.onDelete(props.id,props.ind);
-  }
+  const [noteChng, setNoteChng] = useState(false);
 
-  const [note,setNote]= useState({
-    ind:props.ind,
-    title: props.title,
-    content: props.content,
-    bgColor:props.bgColor,
-    fontColor:props.fontColor
-  });
+  const noteBackground = useMemo(() => {
+    return {
+      background: note.bgColor,
+      color: note.fontColor,
+    };
+  }, [note]);
 
-  const [noteChng,setNoteChng] = useState(false);
-
-  
-  const noteBackground=useMemo(()=> {
-    return{
-    background:note.bgColor,
-    color:note.fontColor}
-  },[note]);
-
-  function onNoteChange(name,val)
-  {
-    if(note[name] !== val){
-    setNote(prevNote=>({...prevNote,[name]:val}));
-    setNoteChng(true);
+  function onNoteChange(name, val) {
+    if (note[name] !== val) {
+      setNote((prevNote) => ({ ...prevNote, [name]: val }));
+      setNoteChng(true);
     }
   }
-  
-  function UpdateBackEndDB()
-  { if(noteChng){
-    console.log("updating"); 
-    props.onUpdate(note);
-    setNoteChng(false);
+
+  function UpdateBackEndDB() {
+    if (noteChng) {
+      setNotes(
+        notes.map((o) => {
+          if (o.ind === note.ind) return { ...note };
+          return o;
+        })
+      );
+      axios
+        .patch("/update", note)
+        .then(() => console.log("Data to be updated is shared"))
+        .catch((err) => {
+          console.error(err);
+        });
+      setNoteChng(false);
+    }
   }
+  function handleDelete() {
+    axios
+      .delete("/delete", { data: { index: note.ind } })
+      .then(() => console.log("Data to be deleted is shared"))
+      .catch((err) => {
+        console.error(err);
+      });
+    setNotes((prevNotes) => {
+      return prevNotes.filter((noteItem) => {
+        return noteItem.ind !== note.ind;
+      });
+    });
   }
+
+  function handleZoom() {
+    history.push(`/notes/${note.title}`);
+  }
+  const homeRoute = "/home/" + loggedIn.username;
 
   return (
     <Zoom in={true}>
-    <div style={noteBackground} className="note">
-    <AlertDialog title={props.title} content={props.content} onUpdate={onNoteChange} ind={props.ind} bgColor={note.bgColor}
-            fontColor={note.fontColor} onColorChange={onNoteChange} DBUpdate={UpdateBackEndDB}/>
-      <h1>{props.title}</h1>
-      <p>{props.content}</p>
-      <button className="deleteIcon" onClick={handleClick}>
-        <DeleteIcon />
-      </button>
-    </div>
+      <div style={noteBackground} className="note">
+        <div className="container">
+          <div className="row">
+            <div className="col-sm-10" style={{marginLeft:"-1rem"}}>
+              <h1>{note.title}</h1>
+            </div>
+            <div className="col-sm-2" style={{top:"-0.5rem",right:"-1.5rem"}}>
+              <Dropdown drop="left">
+                <Dropdown.Toggle bsPrefix="custom-toggle" variant="success" id="dropdown-basic" size="sm">
+                  <MenuIcon style={{color:note.fontColor}}/>
+                </Dropdown.Toggle>
+                <Dropdown.Menu  style={{background:"rgba(22, 49, 54, 0.5)"}}>
+                  <Dropdown.Item style={{background:"transparent"}}><button className="zoomIcon" onClick={handleZoom}><ZoomOutMapIcon /></button>
+                  <button  className="deleteIcon" onClick={handleDelete}><DeleteIcon /></button>
+                  <AlertDialog onUpdate={onNoteChange} note={note} onColorChange={onNoteChange} DBUpdate={UpdateBackEndDB} /> </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>                            
+            </div>
+          </div>
+          <div className="row">
+            <p>{note.content}</p>
+          </div>
+        </div>
+      </div>
     </Zoom>
   );
 }
